@@ -1,0 +1,20 @@
+**Title:**
+View personal information
+As a user, I want to view my saved name, username, age, and country on my profile page, so that I can see the details I provided during registration.
+
+Edit personal information
+As a user, I want to update my name, username, age, and country on my profile page, so that I can keep my information up to date.
+
+Save updated information
+As a user, I want the changes I make to my profile to be saved, so that my updated details are stored and reflected throughout the app.
+
+Update name in header
+As a user, I want my updated name to be displayed in the app's header after I change it in the profile, so that my changes are immediately visible._As a [user role], I want [feature/goal], so that [reason]._
+**Acceptance Criteria:**
+1. [Criteria 1]
+2. [Criteria 2]
+3. [Criteria 3]
+**Priority:** [High/Medium/Low]
+**Story Points:** [Estimated Effort in Points]
+**Notes:**
+- [Additional information or edge cases]
