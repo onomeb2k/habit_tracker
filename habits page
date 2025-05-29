@@ -1,0 +1,17 @@
+**Title:**
+Add a new habit
+As a user, I want to add new habits on the details configuration page so that I can manage and update my habits as needed.
+
+Delete a habit
+As a user, I want to delete existing habits so that I can keep my habits up to date.
+
+Personalize a habit with color
+As a user, I want to assign a specific color to each habit to make it personal to me._As a [user role], I want [feature/goal], so that [reason]._
+**Acceptance Criteria:**
+1. [Criteria 1]
+2. [Criteria 2]
+3. [Criteria 3]
+**Priority:** [High/Medium/Low]
+**Story Points:** [Estimated Effort in Points]
+**Notes:**
+- [Additional information or edge cases]
