@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'login_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'habit_tracker_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -61,27 +63,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
   }
 
+  void _showToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  }
+
   Future<void> saveUserData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    final name = _nameController.text;
+    final username = _usernameController.text;
+    final password = _passwordController.text;
+    if (username.isEmpty || name.isEmpty) {
+      _showToast('Please fill in all fields');
+      return;
+    }
     if (_formKey.currentState!.validate()) {
       // If the form is not valid, do not proceed
 
-      prefs.setString('username', _usernameController.text);
-      prefs.setString('password', _passwordController.text);
+      prefs.setString('username', username);
+      prefs.setString('password', password);
       if (!mounted) return;
-      Navigator.push(
+
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => LoginScreen(),
+          builder: (context) => HabitTrackerScreen(
+            username: _usernameController.text,
+          ),
         ),
       );
-// create logic to get details
     }
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
     _nameController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();

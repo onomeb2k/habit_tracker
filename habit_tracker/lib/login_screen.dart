@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:habit_tracker/register_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'habit_tracker_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,22 +21,23 @@ class _LoginScreenState extends State<LoginScreen> {
   final String defaultPassword = 'password123';
 
   Future<void> authenticateUser() async {
+    final username = _usernameController.text;
+    final password = _passwordController.text;
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? storedUsername = prefs.getString('username');
     String? storedPassword = prefs.getString('password');
 
     if (_formKey.currentState!.validate() &&
-        storedUsername == _usernameController.text &&
-        storedPassword == _passwordController.text) {
-      print('login in succeful');
+        storedUsername == username &&
+        storedPassword == password) {
       // Navigate to the home screen or dashboard
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const RegisterScreen()),
+        MaterialPageRoute(
+            builder: (context) => HabitTrackerScreen(username: username)),
       );
-    } else if (storedUsername != _usernameController.text ||
-        storedPassword != _passwordController.text) {
+    } else if (storedUsername != username || storedPassword != password) {
       // Navigate to the home screen or dashboard
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
