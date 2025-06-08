@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:habit_tracker/login_screen.dart';
+import 'add_habit_screen.dart';
+import 'detail_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class HabitTrackerScreen extends StatefulWidget {
   final String username;
@@ -17,10 +22,26 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
   @override
   void initState() {
     super.initState();
+    _loadUserData();
+  }
+
+  // country_list.dart
+
+  Future<void> _loadUserData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      name = prefs.getString('name') ?? widget.username;
+      selectedHabitsMap = Map<String, String>.from(
+          jsonDecode(prefs.getString('selectedHabitsMap') ?? '{}'));
+      completedHabitsMap = Map<String, String>.from(
+          jsonDecode(prefs.getString('completedHabitsMap') ?? '{}'));
+    });
   }
 
   Future<void> _saveHabits() async {
-    //save habits to preferences in the future
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selectedHabitsMap', jsonEncode(selectedHabitsMap));
+    await prefs.setString('completedHabitsMap', jsonEncode(completedHabitsMap));
   }
 
   Color _getColorFromHex(String hexColor) {
@@ -55,7 +76,7 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
                 color: Colors.blue.shade700,
               ),
               child: Text(
-                widget.username.isNotEmpty ? widget.username : 'Loading...',
+                name.isNotEmpty ? name : 'Loading...',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 24,
@@ -95,6 +116,12 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
               leading: const Icon(Icons.logout),
               title: const Text('Sign Out'),
               onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => LoginScreen(),
+                  ),
+                );
                 // Handle logout
               },
             ),
@@ -113,140 +140,155 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
             },
           );
         }),
-        title: Text(
-          name.isNotEmpty ? name : 'Loading...',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 24,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+        title: Container(
+          alignment: Alignment.center,
+          margin: const EdgeInsets.only(right: 40),
+          child: Text(
+            name.isNotEmpty ? name : 'Loading...',
+            style: const TextStyle(
+              fontSize: 24,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         automaticallyImplyLeading: true,
       ),
-      body: Column(
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              'To Do 📝',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+      body: RefreshIndicator(
+        onRefresh: () {
+          return _loadUserData();
+        },
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'To Do 📝',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ),
-          selectedHabitsMap.isEmpty
-              ? const Expanded(
-                  child: Center(
-                    child: Text(
-                      'Use the + button to create some habits!',
-                      style: TextStyle(fontSize: 18, color: Colors.grey),
+            selectedHabitsMap.isEmpty
+                ? const Expanded(
+                    child: Center(
+                      child: Text(
+                        'Use the + button to create some habits!',
+                        style: TextStyle(fontSize: 18, color: Colors.grey),
+                      ),
+                    ),
+                  )
+                : Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16.0),
+                      itemCount: selectedHabitsMap.length,
+                      itemBuilder: (context, index) {
+                        String habit = selectedHabitsMap.keys.elementAt(index);
+                        Color habitColor =
+                            _getHabitColor(habit, selectedHabitsMap);
+                        return Dismissible(
+                          key: Key(habit),
+                          direction: DismissDirection.endToStart,
+                          onDismissed: (direction) {
+                            setState(() {
+                              String color = selectedHabitsMap.remove(habit)!;
+                              completedHabitsMap[habit] = color;
+                              _saveHabits();
+                            });
+                          },
+                          background: Container(
+                            color: Colors.green,
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text(
+                                  'Swipe to Complete',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                SizedBox(width: 10),
+                                Icon(Icons.check, color: Colors.white),
+                              ],
+                            ),
+                          ),
+                          child: _buildHabitCard(habit, habitColor),
+                        );
+                      },
                     ),
                   ),
-                )
-              : Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: selectedHabitsMap.length,
-                    itemBuilder: (context, index) {
-                      String habit = selectedHabitsMap.keys.elementAt(index);
-                      Color habitColor =
-                          _getHabitColor(habit, selectedHabitsMap);
-                      return Dismissible(
-                        key: Key(habit),
-                        direction: DismissDirection.endToStart,
-                        onDismissed: (direction) {
-                          setState(() {
-                            String color = selectedHabitsMap.remove(habit)!;
-                            completedHabitsMap[habit] = color;
-                            _saveHabits();
-                          });
-                        },
-                        background: Container(
-                          color: Colors.green,
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Text(
-                                'Swipe to Complete',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              SizedBox(width: 10),
-                              Icon(Icons.check, color: Colors.white),
-                            ],
-                          ),
-                        ),
-                        child: _buildHabitCard(habit, habitColor),
-                      );
-                    },
-                  ),
+            const Divider(),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Done ✅🎉',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
-          const Divider(),
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              'Done ✅🎉',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
               ),
             ),
-          ),
-          completedHabitsMap.isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text(
-                    'Swipe right on an activity to mark as done.',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                )
-              : Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: completedHabitsMap.length,
-                    itemBuilder: (context, index) {
-                      String habit = completedHabitsMap.keys.elementAt(index);
-                      Color habitColor =
-                          _getHabitColor(habit, completedHabitsMap);
-                      return Dismissible(
-                        key: Key(habit),
-                        direction: DismissDirection.startToEnd,
-                        onDismissed: (direction) {
-                          setState(() {
-                            String color = completedHabitsMap.remove(habit)!;
-                            selectedHabitsMap[habit] = color;
-                            _saveHabits();
-                          });
-                        },
-                        background: Container(
-                          color: Colors.red,
-                          alignment: Alignment.centerLeft,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: const Row(
-                            children: [
-                              Icon(Icons.undo, color: Colors.white),
-                              SizedBox(width: 10),
-                              Text(
-                                'Swipe to Undo',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ],
+            completedHabitsMap.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(
+                      'Swipe right on an activity to mark as done.',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  )
+                : Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16.0),
+                      itemCount: completedHabitsMap.length,
+                      itemBuilder: (context, index) {
+                        String habit = completedHabitsMap.keys.elementAt(index);
+                        Color habitColor =
+                            _getHabitColor(habit, completedHabitsMap);
+                        return Dismissible(
+                          key: Key(habit),
+                          direction: DismissDirection.startToEnd,
+                          onDismissed: (direction) {
+                            setState(() {
+                              String color = completedHabitsMap.remove(habit)!;
+                              selectedHabitsMap[habit] = color;
+                              _saveHabits();
+                            });
+                          },
+                          background: Container(
+                            color: Colors.red,
+                            alignment: Alignment.centerLeft,
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.undo, color: Colors.white),
+                                SizedBox(width: 10),
+                                Text(
+                                  'Swipe to Undo',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        child: _buildHabitCard(habit, habitColor,
-                            isCompleted: true),
-                      );
-                    },
+                          child: _buildHabitCard(habit, habitColor,
+                              isCompleted: true),
+                        );
+                      },
+                    ),
                   ),
-                ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: selectedHabitsMap.isEmpty
           ? FloatingActionButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddHabitScreen(),
+                  ),
+                );
+              },
               backgroundColor: Colors.blue.shade700,
               tooltip: 'Add Habits',
               child: const Icon(Icons.add),
@@ -260,9 +302,24 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       color: color,
-      child: Container(
+      child: SizedBox(
         height: 60, // Adjust the height for thicker cards.
         child: ListTile(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetailScreen(
+                  item: {
+                    'title': title,
+                    'description': isCompleted
+                        ? 'This habit has been completed.'
+                        : 'This habit is still pending.',
+                  },
+                ),
+              ),
+            );
+          },
           title: Text(
             title.toUpperCase(),
             style: const TextStyle(

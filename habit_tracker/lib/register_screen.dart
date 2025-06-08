@@ -4,6 +4,9 @@ import 'login_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'habit_tracker_screen.dart';
+import 'dart:convert';
+import 'dart:math';
+import 'country_list.dart'; // Import the country list fetching function
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -38,30 +41,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchCountries();
+    _loadCountries();
   }
 
-  Future<void> _fetchCountries() async {
-    List<String> subsetCountries = [
-      'United States',
-      'Canada',
-      'United Kingdom',
-      'Australia',
-      'India',
-      'Germany',
-      'France',
-      'Japan',
-      'China',
-      'Brazil',
-      'South Africa'
-    ];
-
-    setState(() {
-      _countries = subsetCountries;
-      _countries.sort();
-      _country = _countries.isNotEmpty ? _countries[0] : 'United States';
-    });
-  }
+  final Map<String, Color> _habitColors = {
+    'Amber': Colors.amber,
+    'Red Accent': Colors.redAccent,
+    'Light Blue': Colors.lightBlue,
+    'Light Green': Colors.lightGreen,
+    'Purple Accent': Colors.purpleAccent,
+    'Orange': Colors.orange,
+    'Teal': Colors.teal,
+    'Deep Purple': Colors.deepPurple,
+  };
 
   void _showToast(String message) {
     Fluttertoast.showToast(
@@ -74,31 +66,64 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  Future<void> _loadCountries() async {
+    try {
+      List<String> countries = await fetchCountries();
+      setState(() {
+        _countries = countries;
+      });
+    } catch (e) {
+      // Handle error
+      _showToast('Error fetching countries');
+    }
+  }
+
   Future<void> saveUserData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final name = _nameController.text;
     final username = _usernameController.text;
     final password = _passwordController.text;
-    if (username.isEmpty || name.isEmpty) {
+    if (username.isEmpty ||
+        name.isEmpty ||
+        password.isEmpty ||
+        selectedHabits.isEmpty) {
       _showToast('Please fill in all fields');
       return;
     }
-    if (_formKey.currentState!.validate()) {
-      // If the form is not valid, do not proceed
 
-      prefs.setString('username', username);
-      prefs.setString('password', password);
-      if (!mounted) return;
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HabitTrackerScreen(
-            username: _usernameController.text,
-          ),
-        ),
-      );
+    // Assign random colors to selected habits.
+    Map<String, String> selectedHabitsMap = {};
+    final random = Random();
+    final colorKeys = _habitColors.keys.toList();
+    for (var habit in selectedHabits) {
+      var randomColor =
+          _habitColors[colorKeys[random.nextInt(colorKeys.length)]]!;
+      selectedHabitsMap[habit] = randomColor.value.toRadixString(16);
     }
+    // Save user information and habits to shared preferences.
+    await prefs.setString('name', name);
+    await prefs.setString('username', username);
+    await prefs.setString('password', password);
+    await prefs.setDouble('age', _age);
+    await prefs.setString('country', _country);
+    await prefs.setString('selectedHabitsMap', jsonEncode(selectedHabitsMap));
+    // await prefs.setStringList('selectedHabits', selectedHabits);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HabitTrackerScreen(username: username),
+      ),
+    );
+  }
+
+  void _toggleHabitSelection(String habit) {
+    setState(() {
+      if (selectedHabits.contains(habit)) {
+        selectedHabits.remove(habit);
+      } else {
+        selectedHabits.add(habit);
+      }
+    });
   }
 
   @override
@@ -204,9 +229,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     children: availableHabits.map((habit) {
                       final isSelected = selectedHabits.contains(habit);
                       return GestureDetector(
-                        onTap: () {},
+                        onTap: () => _toggleHabitSelection(habit),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding: EdgeInsets.symmetric(
                               horizontal: 20, vertical: 10),
                           decoration: BoxDecoration(
                             color: isSelected
