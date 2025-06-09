@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'login_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -25,6 +24,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String _country = 'United States';
   List<String> _countries = [];
   List<String> selectedHabits = [];
+
   List<String> availableHabits = [
     'Wake Up Early',
     'Workout',
