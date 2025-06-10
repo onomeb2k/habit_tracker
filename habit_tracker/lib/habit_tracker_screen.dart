@@ -4,6 +4,8 @@ import 'add_habit_screen.dart';
 import 'detail_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'personal_info_screen.dart';
+import 'reports_screen.dart';
 
 class HabitTrackerScreen extends StatefulWidget {
   final String username;
@@ -64,6 +66,15 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
     return Colors.blue; // Default color in case of error.
   }
 
+  void _signOut(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -87,22 +98,42 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
             ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Configure'),
-              onTap: () {
-                // Navigate to settings screen
+              onTap: () async {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddHabitScreen(),
+                  ),
+                ).then((updatedHabits) {
+                  _loadUserData(); // Reload data after returning
+                });
               },
             ),
             ListTile(
               leading: const Icon(Icons.person),
               title: const Text('Personal info'),
               onTap: () {
-                // Navigate to history screen
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const PersonalInfoScreen()),
+                ).then((_) {
+                  _loadUserData(); // Reload data after returning
+                });
               },
             ),
             ListTile(
               leading: const Icon(Icons.bar_chart_rounded),
               title: const Text('Reports'),
               onTap: () {
-                // Navigate to history screen
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ReportsScreen()),
+                );
               },
             ),
             ListTile(
@@ -116,12 +147,7 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
               leading: const Icon(Icons.logout),
               title: const Text('Sign Out'),
               onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => LoginScreen(),
-                  ),
-                );
+                _signOut(context);
                 // Handle logout
               },
             ),
