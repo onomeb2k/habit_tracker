@@ -5,6 +5,7 @@ import 'detail_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'personal_info_screen.dart';
+import 'package:habit_tracker/notifications_screen.dart';
 import 'reports_screen.dart';
 
 class HabitTrackerScreen extends StatefulWidget {
@@ -140,7 +141,12 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
               leading: const Icon(Icons.notifications),
               title: const Text('Notifications'),
               onTap: () {
-                // Navigate to history screen
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => NotificationsScreen()),
+                );
               },
             ),
             ListTile(
